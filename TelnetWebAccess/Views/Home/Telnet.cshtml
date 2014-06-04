@@ -53,10 +53,19 @@
                 var characterCountToDelete = 0;
                 var textToAppend = [];
                 for (var i = 0; i < keyCodesLength; i++) {
-                    if (keyCodes[i] == 13) {
-                        //i++;
+                    if (keyCodes[i] === 13) {
+                        // Ignore carriage returns
                     }
-                    else if (keyCodes[i] == 8 && keyCodes[i + 1] == 32) {
+                    else if (keyCodes[i] === 255) {
+                        // TODO: handle 2-3 byte interpret as command IAC, for now ignore
+                        i++;
+                        // WILL USE and START USE, ignore 3rd byte
+                        if (keyCodes[i] === 251 || keyCodes[i] === 253) {
+                            i++;
+                            // TODO: handle option negotiations
+                        }
+                    }
+                    else if (keyCodes[i] === 8 && keyCodes[i + 1] === 32) {
                         switch (keyCodes[i + 2]) {
                             case 8:
                                 characterCountToDelete++;
