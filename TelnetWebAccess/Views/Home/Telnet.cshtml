@@ -6,9 +6,9 @@
     <form role="form">
         <div class="form-group">
             <label for="host" class="control-label">Host</label>
-            <input type="text" class="form-control" id="host" placeholder="127.0.0.1">
+            <input type="text" class="form-control" id="host" placeholder="127.0.0.1" value="10.126.82.26">
             <label for="port" class="control-label">Port</label>
-            <input type="text" class="form-control" id="port" placeholder="23">
+            <input type="text" class="form-control" id="port" placeholder="23" value="7015">
         </div>
         <input class="btn btn-default" type="button" id="connect" value="Connect" />
     </form>
@@ -25,13 +25,52 @@
     <script src="~/signalr/hubs"></script>
     <!--SignalR script to update the telnet page and send messages.-->
     <script>
+        // Prevent backspace from navigating back in browser
+        $(document).unbind('keydown').bind('keydown', function (event) {
+            var doPrevent = false;
+            if (event.keyCode === 8 || event.keyCode === 9 || event.keyCode == 38) {
+                var d = event.srcElement || event.target;
+                if ((d.tagName.toUpperCase() === 'INPUT' && (d.type.toUpperCase() === 'TEXT' || d.type.toUpperCase() === 'PASSWORD' || d.type.toUpperCase() === 'FILE' || d.type.toUpperCase() === 'EMAIL'))
+                    || d.tagName.toUpperCase() === 'TEXTAREA') {
+                    doPrevent = d.readOnly || d.disabled;
+                }
+                else {
+                    doPrevent = true;
+                }
+            }
+
+            if (doPrevent) {
+                event.preventDefault();
+            }
+        });
+
         $(function () {
             // Reference the auto-generated proxy for the hub.
             var telnet = $.connection.telnetHub;
             // Create a function that the hub can call back to display messages.
-            telnet.client.addText = function (message) {
-                // Add the message to the page.
-                $('#terminal').append(htmlEncode(message));
+            telnet.client.addKeyCodes = function (keyCodes) {
+                var keyCodesLength = keyCodes.length;
+                var originalTerminalText = $('#terminal').text();
+                var characterCountToDelete = 0;
+                var textToAppend = [];
+                for (var i = 0; i < keyCodesLength; i++) {
+                    if (keyCodes[i] == 13) {
+                        i++;
+                    }
+                    if (keyCodes[i] == 8 && keyCodes[i + 1] == 32) {
+                        switch (keyCodes[i + 2]) {
+                            case 8:
+                                characterCountToDelete++;
+                                break;
+                        }
+                        i += 2;
+                    } else {
+                        textToAppend.push(String.fromCharCode(keyCodes[i]));
+                    }
+                }
+                $('#terminal').text(originalTerminalText.substring(0, originalTerminalText.length - characterCountToDelete) + textToAppend.join(""));
+
+                // Scroll to bottom
                 $('#terminal').scrollTop($('#terminal')[0].scrollHeight);
             };
             // Set initial focus to message input box.
@@ -41,7 +80,11 @@
             $.connection.hub.start().done(function () {
                 $('#terminal').keypress(function (event) {
                     // Call the Send method on the hub.
-                    telnet.server.send(event.keyCode);
+                    telnet.server.sendKeyPress(event.keyCode);
+                });
+                $('#terminal').keydown(function (event) {
+                    // Call the Send method on the hub.
+                    telnet.server.sendKeyDown(event.keyCode);
                 });
                 $('#connect').click(function () {
                     telnet.server.connect($('#host').val(), $('#port').val());
