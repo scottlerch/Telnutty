@@ -17,6 +17,17 @@ select {
 
 .terminal {
     font-family: "Courier New", Courier, monospace;
+    margin: 0;
+    overflow: scroll;
+    vertical-align: top;
+    font-size: inherit;
+    line-height: inherit;
+    background-image: none;
+    height: 60vh;
+    max-height: 60vh;
+    overflow-y: scroll;
+    color: white;
+    background-color: black;
 }
 
 .top-buffer { margin-top:20px; }

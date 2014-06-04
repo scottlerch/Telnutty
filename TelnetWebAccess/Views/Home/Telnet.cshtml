@@ -12,9 +12,8 @@
         </div>
         <input class="btn btn-default" type="button" id="connect" value="Connect" />
     </form>
-    <div class="top-buffer">
-         <textarea rows="20" cols="80" readonly id="terminal" class="form-control terminal"></textarea>
-    </div>
+    <pre class="top-buffer terminal" id="terminal" tabindex="0">
+    </pre>
 </div>
 @section scripts {
     <!--Script references. -->
@@ -55,9 +54,9 @@
                 var textToAppend = [];
                 for (var i = 0; i < keyCodesLength; i++) {
                     if (keyCodes[i] == 13) {
-                        i++;
+                        //i++;
                     }
-                    if (keyCodes[i] == 8 && keyCodes[i + 1] == 32) {
+                    else if (keyCodes[i] == 8 && keyCodes[i + 1] == 32) {
                         switch (keyCodes[i + 2]) {
                             case 8:
                                 characterCountToDelete++;
