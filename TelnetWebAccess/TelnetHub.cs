@@ -1,63 +1,91 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using Microsoft.AspNet.SignalR;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNet.SignalR;
 
 namespace TelnetWebAccess
 {
-    public enum JavaScriptKeyCodes
-    {
-        Left = 37,
-        Up = 38,
-        Right = 39,
-        Down = 40,
-        Tab = 9,
-        Backspace = 8,
-        Enter = 13,
-    }
 
     public class TelnetHub : Hub
     {
         private static readonly HashSet<char> PrintableChars = new HashSet<char>(
             Enumerable
             .Range(0, char.MaxValue + 1)
-                .Select(i => (char) i)
+                .Select(i => (char)i)
                 .Where(c => !char.IsControl(c))
                 .Except(new[]
                 {
-                    (char)JavaScriptKeyCodes.Left, 
-                    (char)JavaScriptKeyCodes.Up,
-                    (char)JavaScriptKeyCodes.Right,
-                    (char)JavaScriptKeyCodes.Down,
-                    (char)JavaScriptKeyCodes.Enter,
+                    (char)KeyCode.Left, 
+                    (char)KeyCode.Up,
+                    (char)KeyCode.Right,
+                    (char)KeyCode.Down,
+                    (char)KeyCode.Enter,
                 }));
 
-        private static readonly object tcpClientLock = new object();
-        private static TcpClient tcpClient;
-        private static Stream tcpStream;
-        private static Task tcpReaderTask;
+        private static readonly ConcurrentDictionary<TelnetEndPoint, TelnetConnection> telnetConnections =
+            new ConcurrentDictionary<TelnetEndPoint, TelnetConnection>();
 
-        public void SendKeyPress(int keyCode)
+        public void Connect(string host, string port)
         {
-            if (PrintableChars.Contains((char)keyCode))
+            var endpoint = new TelnetEndPoint(host, int.Parse(port));
+
+            telnetConnections.GetOrAdd(endpoint, ep => new TelnetConnection(ep, data =>
+                Clients.All.addKeyCodes(data.Select(x => (int)x).ToArray())));
+        }
+
+        public void SendKeyPress(string host, string port, int keyCode)
+        {
+            var endpoint = new TelnetEndPoint(host, int.Parse(port));
+            TelnetConnection telnetConnection;
+
+            if (telnetConnections.TryGetValue(endpoint, out telnetConnection) &&
+                PrintableChars.Contains((char)keyCode))
             {
-                Write(Encoding.UTF8.GetBytes(new[] {(char) keyCode}));
+                telnetConnection.Write(Encoding.UTF8.GetBytes(new[] { (char)keyCode }));
             }
         }
 
-        private static void Write(byte[] data)
+        public void SendKeyDown(string host, string port, int keyCode)
         {
-            lock (tcpClientLock)
+            var endpoint = new TelnetEndPoint(host, int.Parse(port));
+            TelnetConnection telnetConnection;
+
+            if (telnetConnections.TryGetValue(endpoint, out telnetConnection) &&
+                !PrintableChars.Contains((char)keyCode))
             {
-                if (tcpStream == null) return;
-                tcpStream.Write(data, 0, data.Length);
+                switch ((KeyCode)keyCode)
+                {
+                    case KeyCode.Tab:
+                        WriteEscapeSequence(telnetConnection, 0x09);
+                        break;
+
+                    case KeyCode.Backspace:
+                        WriteEscapeSequence(telnetConnection, 0x7f);
+                        break;
+
+                    case KeyCode.Enter:
+                        telnetConnection.Write(Encoding.UTF8.GetBytes(new[] { '\r' }));
+                        break;
+
+                    case KeyCode.Left:
+                        break;
+
+                    case KeyCode.Right:
+                        break;
+
+                    case KeyCode.Up:
+                        WriteEscapeSequence(telnetConnection, 0x41);
+                        break;
+
+                    case KeyCode.Down:
+                        WriteEscapeSequence(telnetConnection, 0x42);
+                        break;
+                }
             }
         }
 
-        private static void WriteEscapeSequence(params byte[] values)
+        private void WriteEscapeSequence(TelnetConnection telnetConnection, params byte[] values)
         {
             var fullEscapeSequence = new byte[values.Length + 2];
             fullEscapeSequence[0] = 0x1b;
@@ -68,86 +96,7 @@ namespace TelnetWebAccess
                 fullEscapeSequence[i + 2] = values[0];
             }
 
-            Write(fullEscapeSequence);
-        }
-
-        public void SendKeyDown(int keyCode)
-        {
-            if (!PrintableChars.Contains((char) keyCode))
-            {
-                switch ((JavaScriptKeyCodes)keyCode)
-                {
-                    case JavaScriptKeyCodes.Tab:
-                        WriteEscapeSequence(0x09);
-                        break;
-
-                    case JavaScriptKeyCodes.Backspace:
-                        WriteEscapeSequence(0x7f);
-                        break;
-
-                    case JavaScriptKeyCodes.Enter:
-                        Write(Encoding.UTF8.GetBytes(new [] {'\r'}));
-                        break;
-
-                    case JavaScriptKeyCodes.Left:
-                        break;
-
-                    case JavaScriptKeyCodes.Right:
-                        break;
-
-                    case JavaScriptKeyCodes.Up:
-                        WriteEscapeSequence(0x41);
-                        break;
-
-                    case JavaScriptKeyCodes.Down:
-                        WriteEscapeSequence(0x42);
-                        break;
-                }
-            }
-        }
-
-        public void Connect(string host, string port)
-        {
-            lock (tcpClientLock)
-            {
-                if (tcpClient != null)
-                {
-                    tcpClient.Close();
-                    tcpClient = null;
-                }
-
-                tcpClient = new TcpClient();
-                tcpClient.Connect(host, int.Parse(port));
-                tcpStream = tcpClient.GetStream();
-
-                if (tcpReaderTask == null || tcpReaderTask.IsCompleted)
-                {
-                    tcpReaderTask = Task.Run(() =>
-                    {
-                        var buffer = new byte[4096];
-
-                        while (tcpClient.Connected)
-                        {
-                            try
-                            {
-                                var count = tcpStream.Read(buffer, 0, buffer.Length);
-
-                                if (count > 0)
-                                {
-                                    Clients.All.addKeyCodes(buffer.Take(count).Select (x => (int)x).ToArray());
-                                }
-                            }
-                            catch
-                            {
-                                var newTcpClient = new TcpClient();
-                                newTcpClient.Connect(host, int.Parse(port));
-                                tcpStream = newTcpClient.GetStream();
-                                tcpClient = newTcpClient;
-                            }
-                        }
-                    });
-                }
-            }
+            telnetConnection.Write(fullEscapeSequence);
         }
     }
 }
