@@ -139,6 +139,7 @@
     <Compile Include="Startup.cs" />
     <Compile Include="TelnetConnection.cs" />
     <Compile Include="TelnetEndPoint.cs" />
+    <Compile Include="TelnetHistory.cs" />
     <Compile Include="TelnetHub.cs" />
   </ItemGroup>
   <ItemGroup>

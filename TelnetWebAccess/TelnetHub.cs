@@ -33,34 +33,18 @@ namespace TelnetWebAccess
         public async Task Connect(string host, string port)
         {
             var endpoint = new TelnetEndPoint(host, int.Parse(port));
-            var logPath = HttpContext.Current.Server.MapPath("~/App_Data/" + endpoint + ".dat");
+            var history = new TelnetHistory(endpoint);
 
             await Groups.Add(Context.ConnectionId, endpoint.ToString());
 
-            if (File.Exists(logPath))
-            {
-                using (var readFileStream = File.OpenRead(logPath))
-                {
-                    // Read last 4KB of data for initial history when client connects
-                    var previousData = new byte[4096];
-                    var count = readFileStream.Read(previousData, 0, previousData.Length);
-                    var truncatedPreviousData = new byte[count];
-                    Array.Copy(previousData, truncatedPreviousData, count);
+            var previousData = history.GetHistory(4096);
 
-                    // Only send to the client who just connected
-                    Clients.Client(Context.ConnectionId).addKeyCodes(truncatedPreviousData.Select(x => (int)x).ToArray());
-                }
-            }
+            // Only send to the client who just connected
+            Clients.Client(Context.ConnectionId).addKeyCodes(previousData.Select(x => (int)x).ToArray());
 
             telnetConnections.GetOrAdd(endpoint, ep => new TelnetConnection(ep, data =>
             {
-                using (var fileStream = File.OpenWrite(logPath))
-                {
-                    fileStream.Seek(0, SeekOrigin.End);
-                    fileStream.Write(data, 0, data.Length);
-                    fileStream.Close();
-                }
-
+                history.AppendHistory(data);
                 Clients.Group(endpoint.ToString()).addKeyCodes(data.Select(x => (int) x).ToArray());
             }));
         }
