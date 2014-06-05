@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNet.SignalR;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNet.SignalR;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,12 +27,14 @@ namespace TelnetWebAccess
         private static readonly ConcurrentDictionary<TelnetEndPoint, TelnetConnection> telnetConnections =
             new ConcurrentDictionary<TelnetEndPoint, TelnetConnection>();
 
-        public void Connect(string host, string port)
+        public async Task Connect(string host, string port)
         {
             var endpoint = new TelnetEndPoint(host, int.Parse(port));
 
+            await Groups.Add(Context.ConnectionId, endpoint.ToString());
+
             telnetConnections.GetOrAdd(endpoint, ep => new TelnetConnection(ep, data =>
-                Clients.All.addKeyCodes(data.Select(x => (int)x).ToArray())));
+                Clients.Group(endpoint.ToString()).addKeyCodes(data.Select(x => (int)x).ToArray())));
         }
 
         public void SendKeyPress(string host, string port, int keyCode)

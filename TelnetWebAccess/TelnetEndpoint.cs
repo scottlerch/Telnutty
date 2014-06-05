@@ -41,5 +41,10 @@
         {
             return !Equals(left, right);
         }
+
+        public override string ToString()
+        {
+            return Host + ":" + Port;
+        }
     }
 }
