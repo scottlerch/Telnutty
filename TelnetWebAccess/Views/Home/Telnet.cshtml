@@ -102,10 +102,25 @@
                     // Call the Send method on the hub.
                     telnet.server.sendKeyDown(host, port, event.keyCode);
                 });
-                $('#connect').click(function() {
-                    host = $('#host').val();
-                    port = $('#port').val();
-                    telnet.server.connect(host, port);
+                $('#connect').click(function () {
+
+                    if ($('#connect').val() == "Connect") {
+
+                        host = $('#host').val();
+                        port = $('#port').val();
+                        telnet.server.connect(host, port);
+
+                        $('#connect').val("Disconnect");
+
+                    } else if ($('#connect').val() == "Disconnect") {
+
+                        rawTelnetData = "";
+                        $('#terminal').html(rawTelnetData);
+
+                        telnet.server.disconnect(host, port);
+
+                        $('#connect').val("Connect");
+                    }
                 });
             });
         });

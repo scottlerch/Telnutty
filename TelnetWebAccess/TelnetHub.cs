@@ -26,6 +26,13 @@ namespace TelnetWebAccess
         private static readonly ConcurrentDictionary<TelnetEndPoint, TelnetConnection> telnetConnections =
             new ConcurrentDictionary<TelnetEndPoint, TelnetConnection>();
 
+        public Task Disconnect(string host, string port)
+        {
+            var endpoint = new TelnetEndPoint(host, int.Parse(port));
+
+            return Groups.Remove(Context.ConnectionId, endpoint.ToString());
+        }
+
         public async Task Connect(string host, string port)
         {
             var endpoint = new TelnetEndPoint(host, int.Parse(port));
