@@ -17,18 +17,15 @@ namespace TelnetWebAccess
         {
             if (File.Exists(historyPath))
             {
-                using (var readFileStream = File.OpenRead(historyPath))
+                using (var fileStream = File.Open(historyPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    readFileStream.Position = Math.Max(readFileStream.Length - sizeInBytes, 0);
+                    fileStream.Position = Math.Max(fileStream.Length - sizeInBytes, 0);
 
-                    var previousData = new byte[4096];
-                    var count = readFileStream.Read(previousData, 0, previousData.Length);
-                    var truncatedPreviousData = new byte[count];
-                    Array.Copy(previousData, truncatedPreviousData, count);
+                    var data = new byte[fileStream.Length - fileStream.Position];
+                    fileStream.Read(data, 0, data.Length);
+                    fileStream.Close();
 
-                    readFileStream.Close();
-
-                    return truncatedPreviousData;
+                    return data;
                 }
             }
 
@@ -37,9 +34,8 @@ namespace TelnetWebAccess
 
         public void AppendHistory(byte[] data)
         {
-            using (var fileStream = File.OpenWrite(historyPath))
+            using (var fileStream = File.Open(historyPath, FileMode.Append, FileAccess.Write, FileShare.Read))
             {
-                fileStream.Seek(0, SeekOrigin.End);
                 fileStream.Write(data, 0, data.Length);
                 fileStream.Close();
             }
