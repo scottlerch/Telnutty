@@ -44,7 +44,7 @@
 
         public override string ToString()
         {
-            return Host + ":" + Port;
+            return Host + "_" + Port;
         }
     }
 }

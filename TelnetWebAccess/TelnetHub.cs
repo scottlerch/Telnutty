@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.IO;
+using System.Threading.Tasks;
+using System.Web;
 using Microsoft.AspNet.SignalR;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -30,11 +33,36 @@ namespace TelnetWebAccess
         public async Task Connect(string host, string port)
         {
             var endpoint = new TelnetEndPoint(host, int.Parse(port));
+            var logPath = HttpContext.Current.Server.MapPath("~/App_Data/" + endpoint + ".dat");
 
             await Groups.Add(Context.ConnectionId, endpoint.ToString());
 
+            if (File.Exists(logPath))
+            {
+                using (var readFileStream = File.OpenRead(logPath))
+                {
+                    // Read last 4KB of data for initial history when client connects
+                    var previousData = new byte[4096];
+                    var count = readFileStream.Read(previousData, 0, previousData.Length);
+                    var truncatedPreviousData = new byte[count];
+                    Array.Copy(previousData, truncatedPreviousData, count);
+
+                    // Only send to the client who just connected
+                    Clients.Client(Context.ConnectionId).addKeyCodes(truncatedPreviousData.Select(x => (int)x).ToArray());
+                }
+            }
+
             telnetConnections.GetOrAdd(endpoint, ep => new TelnetConnection(ep, data =>
-                Clients.Group(endpoint.ToString()).addKeyCodes(data.Select(x => (int)x).ToArray())));
+            {
+                using (var fileStream = File.OpenWrite(logPath))
+                {
+                    fileStream.Seek(0, SeekOrigin.End);
+                    fileStream.Write(data, 0, data.Length);
+                    fileStream.Close();
+                }
+
+                Clients.Group(endpoint.ToString()).addKeyCodes(data.Select(x => (int) x).ToArray());
+            }));
         }
 
         public void SendKeyPress(string host, string port, int keyCode)
