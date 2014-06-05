@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Microsoft.AspNet.SignalR;
+﻿using Microsoft.AspNet.SignalR;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,8 +13,14 @@ namespace TelnetWebAccess
             Enumerable
             .Range(0, char.MaxValue + 1)
                 .Select(i => (char)i)
-                .Where(c => !char.IsControl(c))
-                .Except(new[]
+                .Where(c => !char.IsControl(c)));
+
+        private static readonly HashSet<char> ControlChars = new HashSet<char>(
+            Enumerable
+            .Range(0, char.MaxValue + 1)
+                .Select(i => (char)i)
+                .Where(char.IsControl)
+                .Union(new[]
                 {
                     (char)KeyCode.Left, 
                     (char)KeyCode.Up,
@@ -83,7 +88,7 @@ namespace TelnetWebAccess
             controlDownStatus.TryGetValue(Context.ConnectionId, out controlDown);
 
             if (telnetConnections.TryGetValue(endpoint, out telnetConnection) &&
-                (controlDown || !PrintableChars.Contains((char)keyCode)))
+                (controlDown || ControlChars.Contains((char)keyCode)))
             {
                 controlDown = false;
 
