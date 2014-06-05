@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNet.SignalR;
+﻿using System.Diagnostics;
+using Microsoft.AspNet.SignalR;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,11 +21,15 @@ namespace TelnetWebAccess
                     (char)KeyCode.Up,
                     (char)KeyCode.Right,
                     (char)KeyCode.Down,
-                    (char)KeyCode.Enter
+                    (char)KeyCode.Enter,
+                    (char)KeyCode.Control
                 }));
 
         private static readonly ConcurrentDictionary<TelnetEndPoint, TelnetConnection> telnetConnections =
             new ConcurrentDictionary<TelnetEndPoint, TelnetConnection>();
+
+        private static readonly ConcurrentDictionary<string, bool> controlDownStatus = 
+            new ConcurrentDictionary<string, bool>(); 
 
         public Task Disconnect(string host, string port)
         {
@@ -64,14 +69,24 @@ namespace TelnetWebAccess
             }
         }
 
+        public void SendKeyUp(string host, string port, int keyCode)
+        {
+            controlDownStatus.AddOrUpdate(Context.ConnectionId, id => false, (id, existingControlDown) => false);
+        }
+
         public void SendKeyDown(string host, string port, int keyCode)
         {
             var endpoint = new TelnetEndPoint(host, int.Parse(port));
             TelnetConnection telnetConnection;
 
+            bool controlDown;
+            controlDownStatus.TryGetValue(Context.ConnectionId, out controlDown);
+
             if (telnetConnections.TryGetValue(endpoint, out telnetConnection) &&
-                !PrintableChars.Contains((char)keyCode))
+                (controlDown || !PrintableChars.Contains((char)keyCode)))
             {
+                controlDown = false;
+
                 switch ((KeyCode)keyCode)
                 {
                     case KeyCode.Tab:
@@ -92,6 +107,14 @@ namespace TelnetWebAccess
                     case KeyCode.Right:
                         break;
 
+                    case KeyCode.C:
+                        telnetConnection.Write(Encoding.UTF8.GetBytes(new[] { '\x3' }));
+                        break;
+
+                    case KeyCode.Control:
+                        controlDown = true;
+                        break;
+
                     case KeyCode.Up:
                         WriteEscapeSequence(telnetConnection, 0x41);
                         break;
@@ -101,6 +124,8 @@ namespace TelnetWebAccess
                         break;
                 }
             }
+
+            controlDownStatus.AddOrUpdate(Context.ConnectionId, id => controlDown, (id, existingControlDown) => controlDown);
         }
 
         private void WriteEscapeSequence(TelnetConnection telnetConnection, params byte[] values)

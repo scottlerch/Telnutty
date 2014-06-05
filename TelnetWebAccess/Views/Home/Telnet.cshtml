@@ -102,6 +102,10 @@
                     // Call the Send method on the hub.
                     telnet.server.sendKeyDown(host, port, event.keyCode);
                 });
+                $('#terminal').keyup(function (event) {
+                    // Call the Send method on the hub.
+                    telnet.server.sendKeyUp(host, port, event.keyCode);
+                });
                 $('#connect').click(function () {
 
                     if ($('#connect').val() == "Connect") {

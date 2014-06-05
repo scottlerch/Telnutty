@@ -9,5 +9,7 @@
         Tab = 9,
         Backspace = 8,
         Enter = 13,
+        Control = 17,
+        C = 67,
     }
 }
