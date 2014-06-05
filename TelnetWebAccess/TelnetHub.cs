@@ -1,16 +1,12 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Web;
-using Microsoft.AspNet.SignalR;
+﻿using Microsoft.AspNet.SignalR;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace TelnetWebAccess
 {
-
     public class TelnetHub : Hub
     {
         private static readonly HashSet<char> PrintableChars = new HashSet<char>(
@@ -24,7 +20,7 @@ namespace TelnetWebAccess
                     (char)KeyCode.Up,
                     (char)KeyCode.Right,
                     (char)KeyCode.Down,
-                    (char)KeyCode.Enter,
+                    (char)KeyCode.Enter
                 }));
 
         private static readonly ConcurrentDictionary<TelnetEndPoint, TelnetConnection> telnetConnections =
