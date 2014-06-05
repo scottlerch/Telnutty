@@ -6,9 +6,9 @@
     <form role="form">
         <div class="form-group">
             <label for="host" class="control-label">Host</label>
-            <input type="text" class="form-control" id="host" placeholder="127.0.0.1" value="10.126.82.26">
+            <input type="text" class="form-control" id="host" placeholder="127.0.0.1">
             <label for="port" class="control-label">Port</label>
-            <input type="text" class="form-control" id="port" placeholder="23" value="7015">
+            <input type="text" class="form-control" id="port" placeholder="23">
         </div>
         <input class="btn btn-default" type="button" id="connect" value="Connect" />
     </form>
@@ -85,6 +85,9 @@
             };
             // Set initial focus to message input box.
             $('#terminal').focus();
+
+            $('#host').val($.url().param('host'));
+            $('#port').val($.url().param('port'));
 
             var host = "";
             var port = "";
