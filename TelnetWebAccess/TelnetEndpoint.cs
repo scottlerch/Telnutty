@@ -1,9 +1,14 @@
-﻿namespace TelnetWebAccess
+﻿using System;
+
+namespace TelnetWebAccess
 {
     public class TelnetEndPoint
     {
         public TelnetEndPoint(string host, int port)
         {
+            if (string.IsNullOrWhiteSpace(host)) throw new ArgumentException("host");
+            if (port <= 0) throw new ArgumentException("port");
+
             Host = host;
             Port = port;
         }

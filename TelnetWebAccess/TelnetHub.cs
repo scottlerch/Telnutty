@@ -33,9 +33,9 @@ namespace TelnetWebAccess
 
             await Groups.Add(Context.ConnectionId, endpoint.ToString());
 
-            var previousData = history.GetHistory(4096);
+            var previousData = history.GetHistory(8192);
 
-            // Only send to the client who just connected
+            // Only send history to the client who just connected
             Clients.Client(Context.ConnectionId).addKeyCodes(previousData.Select(x => (int)x).ToArray());
 
             telnetConnections.GetOrAdd(endpoint, ep => new TelnetConnection(ep, data =>

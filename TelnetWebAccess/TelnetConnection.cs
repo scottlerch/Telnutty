@@ -19,7 +19,8 @@ namespace TelnetWebAccess
 
             Task.Run(() =>
             {
-                var buffer = new byte[4096];
+                // Just under large object heap size...
+                var buffer = new byte[80000];
 
                 while (true)
                 {
