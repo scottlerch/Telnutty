@@ -67,8 +67,18 @@
                     }
                     else if (keyCodes[i] === 27) {
                         if (keyCodes[i + 1] === 91) {
-                            // TODO: handle all color codes
-
+                            // TODO: handle all color codes, and other 3+ byte CSI sequences
+                            i++;
+                            while (keyCodes[i + 1] < 64 || keyCodes[i + 1] > 126) {
+                                i++;
+                                // Ignore all characters until end of sequence
+                            }
+                            // Ignore end sequence character
+                            i++;
+                        } else if (keyCodes[i + 1] >= 64 && keyCodes[i + 1] <= 95) {
+                            // TODO: handle 2 byte CSI sequences
+                            // Ignore for now
+                            i += 2;
                         }
                     }
                     else if (keyCodes[i] === 8 && keyCodes[i + 1] === 32) {
