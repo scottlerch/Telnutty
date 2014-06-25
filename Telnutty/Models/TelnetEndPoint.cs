@@ -12,6 +12,9 @@ namespace Telnutty.Models
             Host = host;
             Port = port;
         }
+
+        public string ConnectionId { get; private set; }
+
         public string Host { get; private set; }
 
         public int Port { get; private set; }

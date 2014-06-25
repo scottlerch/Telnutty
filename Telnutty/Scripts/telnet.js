@@ -22,8 +22,14 @@ $(function () {
 
     var rawTelnetData = "";
 
+    telnet.client.telnetDisconnected = function() {
+        rawTelnetData = "";
+        $('#terminal').html(rawTelnetData);
+        $('#connect').val("Connect");
+    };
+
     // Create a function that the hub can call back to display messages.
-    telnet.client.addKeyCodes = function (keyCodes) {
+    telnet.client.telnetAddKeyCodes = function (keyCodes) {
 
         var keyCodesLength = keyCodes.length;
         for (var i = 0; i < keyCodesLength; i++) {
@@ -69,15 +75,15 @@ $(function () {
     $.connection.hub.start().done(function () {
         $('#terminal').keypress(function (event) {
             // Call the Send method on the hub.
-            telnet.server.sendKeyPress(host, port, event.keyCode);
+            telnet.server.telnetSendKeyPress(event.keyCode);
         });
         $('#terminal').keydown(function (event) {
             // Call the Send method on the hub.
-            telnet.server.sendKeyDown(host, port, event.keyCode);
+            telnet.server.telnetSendKeyDown(event.keyCode);
         });
         $('#terminal').keyup(function (event) {
             // Call the Send method on the hub.
-            telnet.server.sendKeyUp(host, port, event.keyCode);
+            telnet.server.telnetSendKeyUp(event.keyCode);
         });
         $('#connect').click(function () {
 
@@ -85,7 +91,7 @@ $(function () {
 
                 host = $('#host').val();
                 port = $('#port').val();
-                telnet.server.connect(host, port);
+                telnet.server.telnetConnect(host, port);
 
                 $('#connect').val("Disconnect");
 
@@ -94,7 +100,7 @@ $(function () {
                 rawTelnetData = "";
                 $('#terminal').html(rawTelnetData);
 
-                telnet.server.disconnect(host, port);
+                telnet.server.telnetDisconnect();
 
                 $('#connect').val("Connect");
             }

@@ -30,64 +30,60 @@ namespace Telnutty.Models
                     (char)KeyCode.Control
                 }));
 
-        private static readonly ConcurrentDictionary<TelnetEndPoint, TelnetConnection> telnetConnections =
-            new ConcurrentDictionary<TelnetEndPoint, TelnetConnection>();
+        private static readonly ConcurrentDictionary<string, TelnetConnection> telnetConnections =
+            new ConcurrentDictionary<string, TelnetConnection>();
 
         private static readonly ConcurrentDictionary<string, bool> controlDownStatus = 
-            new ConcurrentDictionary<string, bool>(); 
+            new ConcurrentDictionary<string, bool>();
 
-        public Task Disconnect(string host, string port)
-        {
-            var endpoint = new TelnetEndPoint(host, int.Parse(port));
-
-            return Groups.Remove(Context.ConnectionId, endpoint.ToString());
-        }
-
-        public async Task Connect(string host, int port)
+        public async Task TelnetConnect(string host, int port)
         {
             var endpoint = new TelnetEndPoint(host, port);
-            var history = new TelnetHistory(endpoint);
+            var connectionId = Context.ConnectionId;
+            var connection = new TelnetConnection(
+                endpoint, 
+                data => Clients.Client(connectionId).telnetAddKeyCodes(data.Select(x => (int) x).ToArray()),
+                () => Clients.Client(connectionId).telnetDisconnected());
 
-            await Groups.Add(Context.ConnectionId, endpoint.ToString());
-
-            var previousData = history.GetHistory(8192);
-
-            // Only send history to the client who just connected
-            Clients.Client(Context.ConnectionId).addKeyCodes(previousData.Select(x => (int)x).ToArray());
-
-            telnetConnections.GetOrAdd(endpoint, ep => new TelnetConnection(ep, data =>
+            if (telnetConnections.TryAdd(connectionId, connection))
             {
-                history.AppendHistory(data);
-                Clients.Group(endpoint.ToString()).addKeyCodes(data.Select(x => (int) x).ToArray());
-            }));
+                await connection.ConnectAndReceiveData();
+            }
         }
 
-        public void SendKeyPress(string host, int port, int keyCode)
+        public void TelnetDisconnect()
         {
-            var endpoint = new TelnetEndPoint(host, port);
+            TelnetConnection telnetConnection;
+            if (telnetConnections.TryRemove(Context.ConnectionId, out telnetConnection))
+            {
+                telnetConnection.Dispose();
+            }
+        }
+
+        public void TelnetSendKeyPress(int keyCode)
+        {
             TelnetConnection telnetConnection;
 
-            if (telnetConnections.TryGetValue(endpoint, out telnetConnection) &&
+            if (telnetConnections.TryGetValue(Context.ConnectionId, out telnetConnection) &&
                 PrintableChars.Contains((char)keyCode))
             {
                 telnetConnection.Write(Encoding.UTF8.GetBytes(new[] { (char)keyCode }));
             }
         }
 
-        public void SendKeyUp(string host, int port, int keyCode)
+        public void TelnetSendKeyUp(int keyCode)
         {
             controlDownStatus.AddOrUpdate(Context.ConnectionId, id => false, (id, existingControlDown) => false);
         }
 
-        public void SendKeyDown(string host, int port, int keyCode)
+        public void TelnetSendKeyDown(int keyCode)
         {
-            var endpoint = new TelnetEndPoint(host, port);
             TelnetConnection telnetConnection;
 
             bool controlDown;
             controlDownStatus.TryGetValue(Context.ConnectionId, out controlDown);
 
-            if (telnetConnections.TryGetValue(endpoint, out telnetConnection) &&
+            if (telnetConnections.TryGetValue(Context.ConnectionId, out telnetConnection) &&
                 (controlDown || ControlChars.Contains((char)keyCode)))
             {
                 controlDown = false;

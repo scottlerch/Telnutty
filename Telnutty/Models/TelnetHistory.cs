@@ -12,7 +12,7 @@ namespace Telnutty.Models
         {
             if (endPoint == null) throw new ArgumentNullException("endPoint");
 
-            historyPath = HttpContext.Current.Server.MapPath("~/App_Data/" + endPoint + ".dat");
+            historyPath = HttpContext.Current.Server.MapPath("~/App_Data/" + Guid.NewGuid().ToString("N") + "_" + endPoint + ".dat");
         }
 
         public byte[] GetHistory(int sizeInBytes)
