@@ -94,6 +94,7 @@ $(function () {
                 telnet.server.telnetConnect(host, port);
 
                 $('#connect').val("Disconnect");
+                $('#terminal').focus();
 
             } else if ($('#connect').val() == "Disconnect") {
 
