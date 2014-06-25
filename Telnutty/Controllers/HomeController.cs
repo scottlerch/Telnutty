@@ -1,15 +1,10 @@
 ﻿using System.Web.Mvc;
 
-namespace TelnetWebAccess.Controllers
+namespace Telnutty.Controllers
 {
     public class HomeController : Controller
     {
         public ActionResult Index()
-        {
-            return View();
-        }
-
-        public ActionResult Telnet()
         {
             return View();
         }

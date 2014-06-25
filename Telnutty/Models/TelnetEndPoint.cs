@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TelnetWebAccess
+namespace Telnutty.Models
 {
     public class TelnetEndPoint
     {

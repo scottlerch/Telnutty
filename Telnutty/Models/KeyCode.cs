@@ -1,4 +1,4 @@
-﻿namespace TelnetWebAccess
+﻿namespace Telnutty.Models
 {
     public enum KeyCode
     {

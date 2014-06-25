@@ -1,7 +1,7 @@
 ﻿using System.Web;
 using System.Web.Mvc;
 
-namespace TelnetWebAccess
+namespace Telnutty
 {
     public class FilterConfig
     {

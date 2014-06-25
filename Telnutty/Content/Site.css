@@ -38,3 +38,14 @@ select {
 }
 
 .top-buffer { margin-top:20px; }
+
+body {
+    padding-top: 0px;
+}
+
+@media screen and (min-width: 768px) {
+  .jumbotron {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+}

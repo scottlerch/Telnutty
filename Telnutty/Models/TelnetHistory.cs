@@ -2,7 +2,7 @@
 using System.IO;
 using System.Web;
 
-namespace TelnetWebAccess
+namespace Telnutty.Models
 {
     public class TelnetHistory
     {

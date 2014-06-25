@@ -1,9 +1,9 @@
 ﻿using Owin;
 using Microsoft.Owin;
-using TelnetWebAccess;
+using Telnutty;
 
 [assembly: OwinStartup(typeof(Startup))]
-namespace TelnetWebAccess
+namespace Telnutty
 {
     public class Startup
     {
