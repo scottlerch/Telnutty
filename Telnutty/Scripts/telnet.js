@@ -16,6 +16,10 @@ $(document).unbind('keydown').bind('keydown', function (event) {
     }
 });
 
+$(document).ready(function () {
+    $("#host").focus();
+});
+
 $(function () {
     // Reference the auto-generated proxy for the hub.
     var telnet = $.connection.telnetHub;
@@ -62,11 +66,14 @@ $(function () {
         // Scroll to bottom
         $('#terminal').scrollTop($('#terminal')[0].scrollHeight);
     };
-    // Set initial focus to message input box.
-    $('#terminal').focus();
 
-    $('#host').val($.url().param('host'));
-    $('#port').val($.url().param('port'));
+    if ($.url().param('host')) {
+        $('#host').val($.url().param('host'));
+    }
+
+    if ($.url().param('port')) {
+        $('#port').val($.url().param('port'));
+    }
 
     var host = "";
     var port = "";
