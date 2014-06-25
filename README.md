@@ -1,4 +1,4 @@
-Telnet Web Access
-=================
+Telnutty
+========
 
-Web based telnet client
+Telnet in your browser using only HTML5 and JavaScript.
