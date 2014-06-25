@@ -106,5 +106,17 @@ $(function () {
                 $('#connect').val("Connect");
             }
         });
+        $('#host').on("keypress", function (e) {
+            if (e.keyCode == 13 && $('#connect').val() == "Connect") {
+                $('#connect').click();
+                return false; // prevent the button click from happening
+            }
+        });
+        $('#port').on("keypress", function (e) {
+            if (e.keyCode == 13 && $('#connect').val() == "Connect") {
+                $('#connect').click();
+                return false; // prevent the button click from happening
+            }
+        });
     });
 });
