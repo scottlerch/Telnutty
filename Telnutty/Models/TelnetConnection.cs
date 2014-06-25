@@ -8,14 +8,15 @@ namespace Telnutty.Models
 {
     public sealed class TelnetConnection : IDisposable
     {
+        private readonly TelnetHistory history;
+        private readonly CancellationTokenSource cts;
+
+        private readonly Action disconnected;
+        private readonly Action<byte[]> dataReceived;
+
+        private bool disposed;
         private TcpClient tcpClient;
         private Stream tcpStream;
-        private TelnetHistory history;
-        private Task readTask;
-        private CancellationTokenSource cts;
-        private Action<byte[]> dataReceived;
-        private bool disposed;
-        private Action disconnected;
 
         public TelnetConnection(TelnetEndPoint telnetEndpoint, Action<byte[]> dataReceived, Action disconnected)
         {
