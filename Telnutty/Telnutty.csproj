@@ -151,6 +151,7 @@
     <Content Include="Content\Site.css" />
     <Content Include="Images\120px-Telnet-icon.svg.png" />
     <Content Include="Images\GitHub-Mark-32px.png" />
+    <Content Include="Images\Telnutty.png" />
     <Content Include="Scripts\ansi_up.js" />
     <Content Include="Scripts\bootstrap\bootstrap.js" />
     <Content Include="Scripts\bootstrap\bootstrap.min.js" />
