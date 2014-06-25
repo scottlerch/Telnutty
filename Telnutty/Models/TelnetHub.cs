@@ -43,9 +43,9 @@ namespace Telnutty.Models
             return Groups.Remove(Context.ConnectionId, endpoint.ToString());
         }
 
-        public async Task Connect(string host, string port)
+        public async Task Connect(string host, int port)
         {
-            var endpoint = new TelnetEndPoint(host, int.Parse(port));
+            var endpoint = new TelnetEndPoint(host, port);
             var history = new TelnetHistory(endpoint);
 
             await Groups.Add(Context.ConnectionId, endpoint.ToString());
@@ -62,9 +62,9 @@ namespace Telnutty.Models
             }));
         }
 
-        public void SendKeyPress(string host, string port, int keyCode)
+        public void SendKeyPress(string host, int port, int keyCode)
         {
-            var endpoint = new TelnetEndPoint(host, int.Parse(port));
+            var endpoint = new TelnetEndPoint(host, port);
             TelnetConnection telnetConnection;
 
             if (telnetConnections.TryGetValue(endpoint, out telnetConnection) &&
@@ -74,14 +74,14 @@ namespace Telnutty.Models
             }
         }
 
-        public void SendKeyUp(string host, string port, int keyCode)
+        public void SendKeyUp(string host, int port, int keyCode)
         {
             controlDownStatus.AddOrUpdate(Context.ConnectionId, id => false, (id, existingControlDown) => false);
         }
 
-        public void SendKeyDown(string host, string port, int keyCode)
+        public void SendKeyDown(string host, int port, int keyCode)
         {
-            var endpoint = new TelnetEndPoint(host, int.Parse(port));
+            var endpoint = new TelnetEndPoint(host, port);
             TelnetConnection telnetConnection;
 
             bool controlDown;
